@@ -1,0 +1,6 @@
+/bin/kubectl --kubeconfig=/root/.kube/config patch hpa prod-pos-api-srv -p '{"spec":{"minReplicas": 6, "maxReplicas":15 }}'				
+/bin/kubectl --kubeconfig=/root/.kube/config patch hpa prod-pos-bff-srv -p '{"spec":{"minReplicas": 8, "maxReplicas":20 }}'				
+/bin/kubectl --kubeconfig=/root/.kube/config patch hpa prod-pos-ui-srv -p '{"spec":{"minReplicas": 8, "maxReplicas":15 }}'
+/bin/kubectl --kubeconfig=/root/.kube/config patch hpa prod-pos-partner-portal-srv -p '{"spec":{"minReplicas": 8, "maxReplicas":20 }}'
+/bin/kubectl --kubeconfig=/root/.kube/config patch hpa prod-pos-core-ui-srv -p '{"spec":{"minReplicas": 5, "maxReplicas":12 }}'
+

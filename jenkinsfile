@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+    
+    options {
+        timeout(time: 3, unit: 'HOURS') 
+    }     
+    
+        environment{
+        IP='172.50.3.73'
+    }
+    stages {
+                stage('Mail') {
+            steps {
+sh """
+    echo "Job-Url jenkins-v1.insurancedekho.com/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console", | ssmtp $Approver_Email
+
+"""
+}
+        }
+   stage('deploy') {
+           input {
+                message "Should we continue?"
+                ok "Yes"
+                submitter 'leads'
+                }
+            steps {
+                 sshagent(['terraform']) {
+                 sh """
+                ssh terraform@$IP "cd /home/terraform/girnarsoft-insurancedekho-infrastructure && git pull origin master " ;
+                ssh terraform@$IP "cd /home/terraform/girnarsoft-insurancedekho-infrastructure/ansible && cat <<EOF > user_inventory
+[users]
+${host} ansible_user=ec2-user
+[users:vars]
+user_name=${user_name}
+ansible_ssh_private_key_file=/home/terraform/ec2-create/ansible/server-config/gibpl.pem
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+ansible_user=ec2-user
+
+EOF
+                ";
+                ssh terraform@$IP "echo $user_ssh_key > /home/terraform/ec2-create/ansible/server-config/roles/user_creation/tmpssh.key" ;
+                ssh terraform@$IP "cd /home/terraform/girnarsoft-insurancedekho-infrastructure/ansible && ansible-playbook  jumpbox-access.yml -i user_inventory" ;
+                 """
+                 }
+
+            }
+        }
+        
+        
+    
+    }
+    
+
+}

@@ -1,0 +1,112 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetBucketLocation",
+                "s3:ListAllMyBuckets"
+            ],
+            "Resource": "arn:aws:s3:::*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:GetObjectVersion",
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::gibpl-environment-variables",
+                "arn:aws:s3:::gibpl-environment-variables/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": [
+                "arn:aws:s3:::gibpl-environment-variables/stage/cs*",
+                "arn:aws:s3:::gibpl-environment-variables/stage/cs*/*",
+                "arn:aws:s3:::gibpl-environment-variables/uat/cs*",
+                "arn:aws:s3:::gibpl-environment-variables/uat/cs*/*",
+                "arn:aws:s3:::gibpl-environment-variables/dev/cs*",
+                "arn:aws:s3:::gibpl-environment-variables/dev/cs*/*",
+                "arn:aws:s3:::gibpl-environment-variables/dev/brokerage*",
+                "arn:aws:s3:::gibpl-environment-variables/dev/brokerage*/*",
+                "arn:aws:s3:::gibpl-environment-variables/uat/brokerage*",
+                "arn:aws:s3:::gibpl-environment-variables/uat/brokerage*/*",
+                "arn:aws:s3:::gibpl-environment-variables/stage/brokerage*",
+                "arn:aws:s3:::gibpl-environment-variables/stage/brokerage*/*"
+            ]
+        }
+    ]
+}
+
+
+//---------------------------------------------------MFA---------------------------------//
+
+
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "iam:CreateVirtualMFADevice",
+                "iam:EnableMFADevice",
+                "iam:ResyncMFADevice",
+                "iam:DeleteVirtualMFADevice"
+            ],
+            "Resource": [
+                "arn:aws:iam::*:mfa/${aws:username}",
+                "arn:aws:iam::*:user/${aws:username}"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "iam:DeactivateMFADevice"
+            ],
+            "Resource": [
+                "arn:aws:iam::*:mfa/${aws:username}",
+                "arn:aws:iam::*:user/${aws:username}"
+            ],
+            "Effect": "Allow",
+            "Condition": {
+                "Bool": {
+                    "aws:MultiFactorAuthPresent": "true"
+                }
+            }
+        },
+        {
+            "Action": [
+                "iam:ListMFADevices",
+                "iam:ListVirtualMFADevices",
+                "iam:ListUsers"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Sid": "DenyAllExceptListedIfNoMFA",
+            "Effect": "Deny",
+            "NotAction": [
+                "iam:CreateVirtualMFADevice",
+                "iam:EnableMFADevice",
+                "iam:GetUser",
+                "iam:ListMFADevices",
+                "iam:ListVirtualMFADevices",
+                "iam:ResyncMFADevice",
+                "iam:ChangePassword",
+                "iam:ListUsers",
+                "sts:GetSessionToken"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "BoolIfExists": {
+                    "aws:MultiFactorAuthPresent": "false"
+                }
+            }
+        }
+    ]
+}

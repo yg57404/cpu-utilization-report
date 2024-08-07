@@ -1,0 +1,56 @@
+pipeline {
+    agent any
+    
+    options {
+        timeout(time: 3, unit: 'MINUTES') 
+    }     
+    
+        environment{
+        IP='172.50.4.178'
+    }
+    stages {
+     
+
+        stage('Mail') {
+            steps {
+sh """
+    echo "Subject: Reset AWS Password \nJob-Url jenkins-v1.insurancedekho.com/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console  \n\nPlease Approve request for AWS console password Reset \n\nUser: ${env.USER_NAME} \nEmail: ${env.dev_email} \n\nPlease check user and Email is belongs to same or not", | ssmtp $Approver_Email;
+
+"""
+}
+        }
+        
+
+            
+
+   stage('deploy') {
+            input {
+                message "Should we continue?"
+                ok "Yes"
+                submitter 'leads'
+                }
+
+            steps {
+                script {
+                  def password = sh(script: "openssl rand -base64 14", returnStdout: true).trim()
+                 sh """
+                    ssh deployer@$IP "aws iam update-login-profile --user-name $USER_NAME --password $password@1 >> /dev/null";
+                    ssh deployer@$IP "echo 'Username: $USER_NAME' >> new-password.txt";
+                    ssh deployer@$IP "echo 'Password: $password@1' >> new-password.txt";
+                    ssh deployer@$IP "cat /var/lib/jenkins/mails/aws-reset-mail.txt | (cat - && uuencode new-password.txt  new-password.txt) | /sbin/ssmtp $dev_email";
+                    ssh deployer@$IP "rm -rf new-password.txt";
+                 """
+            }
+        }
+    
+    }
+}
+}
+
+
+
+                    ssh deployer@172.50.4.178 "aws iam update-login-profile --user-name $USER_NAME --password $password@1 >> /dev/null";
+                    ssh deployer@172.50.4.178 "echo 'Username: $USER_NAME' >> new-password.txt";
+                    ssh deployer@172.50.4.178 "echo 'Password: $password@1' >> new-password.txt";
+                    ssh deployer@172.50.4.178 "cat /var/lib/jenkins/mails/aws-reset-mail.txt | (cat - && uuencode new-password.txt  new-password.txt) | /sbin/ssmtp $dev_email";
+                    ssh deployer@172.50.4.178 "rm -rf new-password.txt";

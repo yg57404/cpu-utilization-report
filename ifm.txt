@@ -1,0 +1,10 @@
+rulesmongo1.pnlmanager.local
+rulesmongo2.pnlmanager.local	
+rulesmongo3.pnlmanager.local
+
+
+
+
+cfg = rs.conf()
+cfg.members[0].host = "rulesmongo1.pnlmanager.local:27017"
+rs.reconfig(cfg);

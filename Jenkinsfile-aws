@@ -1,0 +1,29 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Create IAM user') {
+            steps { 
+                    
+                    sh """
+                    ssh deployer@172.50.4.25 "aws iam create-user --user-name $USER_NAME";
+                    ssh deployer@172.50.4.25 "aws iam attach-user-policy --user-name $USER_NAME --policy-arn arn:aws:iam::845742683201:policy/MFA-policy";
+                    ssh deployer@172.50.4.25 "aws iam create-login-profile --user-name $USER_NAME --password $pass";
+                    ssh deployer@172.50.4.25 "echo 'Your IAM user console access credentials:' > credentials.txt"
+                    ssh deployer@172.50.4.25 "echo 'URL: https://gibpl.signin.aws.amazon.com/console' >> credentials.txt"
+                    ssh deployer@172.50.4.25 "echo 'Username: $USER_NAME' >> credentials.txt"
+                    ssh deployer@172.50.4.25 "echo 'Password: $pass' >> credentials.txt"
+                    ssh deployer@$172.50.4.25 "cat /var/lib/jenkins/mails/aws-mail.txt | (cat - && uuencode credentials.txt  credentials.txt) | /sbin/ssmtp $dev_email";
+                    ssh deployer@$172.50.4.25 "rm -rf credentials.txt";
+                    """
+            }
+        }
+    }
+}
+
+
+
+
+
+
+

@@ -1,0 +1,78 @@
+pipeline {
+    agent any
+    
+    options {
+        timeout(time: 3, unit: 'HOURS') 
+    }     
+    
+        environment{
+        IP='172.50.3.73'
+    }
+    stages {
+     
+
+        stage('Mail') {
+            steps {
+emailext (
+    subject: "Job '${env.JOB_NAME} ${env.BUILD_NUMBER}'",
+    body: """<p>Check console output at <a href="'${env.BUILD_URL}console">${env.JOB_NAME}</a></p>""",
+    to: "devops@insurancedekho.com",
+    from: "jenkins@insurancedekho.com"
+)
+}
+        }
+        
+
+            
+
+   stage('deploy') {
+          /*  input {
+                message "Should we continue?"
+                ok "Yes"
+                submitter 'admin,admin1'
+                }*/
+
+
+            steps {
+                
+                 sshagent(['terraform']) {
+                 sh """
+                ssh terraform@$IP "cd /home/terraform/ec2-create && rm -rf terraform.tfstate " ;
+                ssh terraform@$IP "cd /home/terraform/ec2-create && terraform apply  -var="machine_name=$Name" -var="instance_ami=$instance_ami" -var="team_tag=$team"  -var="owner_tag=$ownername"  -var="project_tag=$project" -var="purpose_tag=$purpose" -var="env_tag=$env_var" -var="backup_tag=$backup" -var="cluster_tag=$cluster" -var="instance_profile_name=$instance_profile_name" -var="instance_type=$Machine_size" -auto-approve" ;
+                // ssh terraform@$IP "cd /home/terraform/ec2-create/ansible/server-config && bash get_inventory " ;
+                ssh terraform@$IP "echo $user_ssh_key > /home/terraform/ec2-create/ansible/server-config/roles/user_creation/temp_id_rsa.pub " ;
+                 """
+                 }
+
+            }
+        }
+        
+        
+    
+    }
+    
+    post{
+        success{
+        sshagent(['terraform']){
+          sh """
+              ssh terraform@$IP "cd /home/terraform/ec2-create && rm -rf terraform.tfstate " ;    
+          """
+        }    
+        
+        }     
+        failure{   
+                sshagent(['terraform']){
+                  sh """
+                    ssh terraform@$IP "cd /home/terraform/ec2-create && terraform destroy -auto-approve " ;      
+                  """
+                }    
+        }
+        unstable {       
+                  sshagent(['terraform']){
+                  sh """
+                     ssh terraform@$IP "cd /home/terraform/ec2-create && terraform destroy -auto-approve " ; 
+                  """
+                  }    
+          }
+    }
+}
